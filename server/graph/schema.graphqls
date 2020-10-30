@@ -1,4 +1,3 @@
-scalar Timestamp
 
 type Task {
   id: ID!
@@ -7,15 +6,18 @@ type Task {
   done: Boolean!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+  slug: String!
 }
 
 type Query {
   getAllTasks: [Task!]!
-  getTask(id: ID!): Task!
+  getTask(slug: String!): Task!
 }
 
 type Mutation {
-  createTask(name: String!, description: String!, createdAt: Timestamp!, updatedAt: Timestamp!): Task!
+  createTask(name: String!, description: String!): Task!
   deleteTask(id: ID!): ID
-  updateTask(name: String!, description: String!, updatedAt: Timestamp!, done: Boolean!): Task!
+  updateTask(name: String!, description: String!, done: Boolean!): Task!
 }
+
+scalar Timestamp

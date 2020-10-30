@@ -13,7 +13,7 @@ import (
 	"github.com/hyperxpizza/go-react-gql-todo/graph/model"
 )
 
-func (r *mutationResolver) CreateTask(ctx context.Context, name string, description string, createdAt *string, updatedAt *string) (*model.Task, error) {
+func (r *mutationResolver) CreateTask(ctx context.Context, name string, description string) (*model.Task, error) {
 	// create uuid
 	id, err := uuid.NewV4()
 	if err != nil {
@@ -21,7 +21,7 @@ func (r *mutationResolver) CreateTask(ctx context.Context, name string, descript
 	}
 
 	// get current timestamp and convert it to strings
-	ts := time.Now().String()
+	ts := time.Now().Format("02-Jan-2006 15:04:05")
 
 	task := model.Task{
 		ID:          id.String(),
@@ -32,7 +32,7 @@ func (r *mutationResolver) CreateTask(ctx context.Context, name string, descript
 		UpdatedAt:   ts,
 	}
 
-	stmt, err := r.Database.Prepare(`INSERT INTO tasks VALUES($1, $2, $3, $4, $5, $6`)
+	stmt, err := r.Database.Prepare(`INSERT INTO tasks VALUES($1, $2, $3, $4, $5, $6)`)
 	if err != nil {
 		return nil, err
 	}
@@ -43,13 +43,13 @@ func (r *mutationResolver) CreateTask(ctx context.Context, name string, descript
 	}
 
 	return &task, nil
-
 }
+
 func (r *mutationResolver) DeleteTask(ctx context.Context, id string) (*string, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) UpdateTask(ctx context.Context, name string, description string, updatedAt string, done bool) (*model.Task, error) {
+func (r *mutationResolver) UpdateTask(ctx context.Context, name string, description string, done bool) (*model.Task, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
@@ -58,7 +58,7 @@ func (r *queryResolver) GetAllTasks(ctx context.Context) ([]*model.Task, error) 
 }
 
 func (r *queryResolver) GetTask(ctx context.Context, id string) (*model.Task, error) {
-	panic(fmt.Errorf("not implemented"))
+	var task model.Task
 }
 
 // Mutation returns generated.MutationResolver implementation.

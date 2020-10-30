@@ -10,27 +10,25 @@ import (
 	"github.com/hyperxpizza/go-react-gql-todo/database"
 	"github.com/hyperxpizza/go-react-gql-todo/graph"
 	"github.com/hyperxpizza/go-react-gql-todo/graph/generated"
+	"github.com/joho/godotenv"
 )
 
-const defaultPort = "8080"
-
-var dbName string
-var dbUser string
-var dbPassword string
-
 func init() {
-	dbName = os.Getenv("DB_NAME")
-	dbUser = os.Getenv("DB_USER")
-	dbPassword = os.Getenv("DB_PASSWORD")
+	//load .env file
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("[-] Can not load .env file")
+	}
 }
 
 func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = defaultPort
-	}
 
-	database := database.InitDB(dbUser, dbName, dbPassword)
+	dbUser := os.Getenv("DB_USER")
+	dbName := os.Getenv("DB_NAME")
+	dbPassword := os.Getenv("DB_PASSWORD")
+	port := os.Getenv("PORT")
+
+	database := database.InitDB(dbUser, dbPassword, dbName)
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{Database: database}}))
 
