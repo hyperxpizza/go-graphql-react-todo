@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -15,6 +16,12 @@ import (
 )
 
 func (r *mutationResolver) CreateTask(ctx context.Context, name string, description string) (*model.Task, error) {
+	// check if name is not taken
+	err := r.Database.QueryRow(`SELECT name FROM tasks WHERE task=$1`, name).Scan(&name)
+	if err != sql.ErrNoRows {
+		return nil, fmt.Errorf("This name already exists in the database")
+	}
+
 	// create uuid
 	id, err := uuid.NewV4()
 	if err != nil {
