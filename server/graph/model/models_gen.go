@@ -2,6 +2,10 @@
 
 package model
 
+type DeleteResult struct {
+	ID string `json:"id"`
+}
+
 type Task struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`

@@ -43,6 +43,10 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	DeleteResult struct {
+		ID func(childComplexity int) int
+	}
+
 	Mutation struct {
 		CreateTask func(childComplexity int, name string, description string) int
 		DeleteTask func(childComplexity int, id string) int
@@ -68,7 +72,7 @@ type ComplexityRoot struct {
 
 type MutationResolver interface {
 	CreateTask(ctx context.Context, name string, description string) (*model.Task, error)
-	DeleteTask(ctx context.Context, id string) (*string, error)
+	DeleteTask(ctx context.Context, id string) (*model.DeleteResult, error)
 	UpdateTask(ctx context.Context, id string, name string, description string, done bool) (*model.Task, error)
 }
 type QueryResolver interface {
@@ -91,6 +95,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "DeleteResult.id":
+		if e.complexity.DeleteResult.ID == nil {
+			break
+		}
+
+		return e.complexity.DeleteResult.ID(childComplexity), true
 
 	case "Mutation.createTask":
 		if e.complexity.Mutation.CreateTask == nil {
@@ -289,9 +300,13 @@ type Query {
   getTaskByID(id: ID!): Task!
 }
 
+type DeleteResult{
+  id: String!
+}
+
 type Mutation {
   createTask(name: String!, description: String!): Task!
-  deleteTask(id: ID!): ID
+  deleteTask(id: ID!): DeleteResult!
   updateTask(id: ID!, name: String!, description: String!, done: Boolean!): Task!
 }
 
@@ -467,6 +482,41 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
+func (ec *executionContext) _DeleteResult_id(ctx context.Context, field graphql.CollectedField, obj *model.DeleteResult) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "DeleteResult",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_createTask(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -541,11 +591,14 @@ func (ec *executionContext) _Mutation_deleteTask(ctx context.Context, field grap
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(*model.DeleteResult)
 	fc.Result = res
-	return ec.marshalOID2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNDeleteResult2ᚖgithubᚗcomᚋhyperxpizzaᚋgoᚑreactᚑgqlᚑtodoᚋgraphᚋmodelᚐDeleteResult(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_updateTask(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2120,6 +2173,33 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** object.gotpl ****************************
 
+var deleteResultImplementors = []string{"DeleteResult"}
+
+func (ec *executionContext) _DeleteResult(ctx context.Context, sel ast.SelectionSet, obj *model.DeleteResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, deleteResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("DeleteResult")
+		case "id":
+			out.Values[i] = ec._DeleteResult_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -2142,6 +2222,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "deleteTask":
 			out.Values[i] = ec._Mutation_deleteTask(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "updateTask":
 			out.Values[i] = ec._Mutation_updateTask(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -2547,6 +2630,20 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNDeleteResult2githubᚗcomᚋhyperxpizzaᚋgoᚑreactᚑgqlᚑtodoᚋgraphᚋmodelᚐDeleteResult(ctx context.Context, sel ast.SelectionSet, v model.DeleteResult) graphql.Marshaler {
+	return ec._DeleteResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNDeleteResult2ᚖgithubᚗcomᚋhyperxpizzaᚋgoᚑreactᚑgqlᚑtodoᚋgraphᚋmodelᚐDeleteResult(ctx context.Context, sel ast.SelectionSet, v *model.DeleteResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._DeleteResult(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -2894,21 +2991,6 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	return graphql.MarshalBoolean(*v)
-}
-
-func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalID(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return graphql.MarshalID(*v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
