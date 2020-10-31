@@ -4,5 +4,6 @@ CREATE TABLE tasks (
     taskDescription  TEXT NOT NULL,
     done BOOLEAN NOT NULL,
     created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    updated_at TEXT NOT NULL,
+    slug TEXT NOT NULL
 );

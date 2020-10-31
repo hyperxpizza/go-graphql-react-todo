@@ -9,4 +9,5 @@ type Task struct {
 	Done        bool   `json:"done"`
 	CreatedAt   string `json:"createdAt"`
 	UpdatedAt   string `json:"updatedAt"`
+	Slug        string `json:"slug"`
 }

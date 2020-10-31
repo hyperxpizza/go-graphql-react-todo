@@ -51,7 +51,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		GetAllTasks func(childComplexity int) int
-		GetTask     func(childComplexity int, id string) int
+		GetTask     func(childComplexity int, slug string) int
 	}
 
 	Task struct {
@@ -60,6 +60,7 @@ type ComplexityRoot struct {
 		Done        func(childComplexity int) int
 		ID          func(childComplexity int) int
 		Name        func(childComplexity int) int
+		Slug        func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
 	}
 }
@@ -71,7 +72,7 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	GetAllTasks(ctx context.Context) ([]*model.Task, error)
-	GetTask(ctx context.Context, id string) (*model.Task, error)
+	GetTask(ctx context.Context, slug string) (*model.Task, error)
 }
 
 type executableSchema struct {
@@ -142,7 +143,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetTask(childComplexity, args["id"].(string)), true
+		return e.complexity.Query.GetTask(childComplexity, args["slug"].(string)), true
 
 	case "Task.createdAt":
 		if e.complexity.Task.CreatedAt == nil {
@@ -178,6 +179,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Task.Name(childComplexity), true
+
+	case "Task.slug":
+		if e.complexity.Task.Slug == nil {
+			break
+		}
+
+		return e.complexity.Task.Slug(childComplexity), true
 
 	case "Task.updatedAt":
 		if e.complexity.Task.UpdatedAt == nil {
@@ -258,11 +266,12 @@ type Task {
   done: Boolean!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+  slug: String!
 }
 
 type Query {
   getAllTasks: [Task!]!
-  getTask(id: ID!): Task!
+  getTask(slug: String!): Task!
 }
 
 type Mutation {
@@ -370,14 +379,14 @@ func (ec *executionContext) field_Query_getTask_args(ctx context.Context, rawArg
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+	if tmp, ok := rawArgs["slug"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("slug"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["id"] = arg0
+	args["slug"] = arg0
 	return args, nil
 }
 
@@ -602,7 +611,7 @@ func (ec *executionContext) _Query_getTask(ctx context.Context, field graphql.Co
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetTask(rctx, args["id"].(string))
+		return ec.resolvers.Query().GetTask(rctx, args["slug"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -898,6 +907,41 @@ func (ec *executionContext) _Task_updatedAt(ctx context.Context, field graphql.C
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNTimestamp2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Task_slug(ctx context.Context, field graphql.CollectedField, obj *model.Task) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Task",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Slug, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -2129,6 +2173,11 @@ func (ec *executionContext) _Task(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "updatedAt":
 			out.Values[i] = ec._Task_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "slug":
+			out.Values[i] = ec._Task_slug(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

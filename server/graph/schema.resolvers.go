@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"github.com/gosimple/slug"
 	"github.com/hyperxpizza/go-react-gql-todo/graph/generated"
 	"github.com/hyperxpizza/go-react-gql-todo/graph/model"
 )
@@ -23,6 +24,9 @@ func (r *mutationResolver) CreateTask(ctx context.Context, name string, descript
 	// get current timestamp and convert it to strings
 	ts := time.Now().Format("02-Jan-2006 15:04:05")
 
+	// create slug
+	taskSlug := slug.Make(name)
+
 	task := model.Task{
 		ID:          id.String(),
 		Name:        name,
@@ -30,6 +34,7 @@ func (r *mutationResolver) CreateTask(ctx context.Context, name string, descript
 		Done:        false,
 		CreatedAt:   ts,
 		UpdatedAt:   ts,
+		Slug:        taskSlug,
 	}
 
 	stmt, err := r.Database.Prepare(`INSERT INTO tasks VALUES($1, $2, $3, $4, $5, $6)`)
@@ -57,8 +62,8 @@ func (r *queryResolver) GetAllTasks(ctx context.Context) ([]*model.Task, error) 
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) GetTask(ctx context.Context, id string) (*model.Task, error) {
-	var task model.Task
+func (r *queryResolver) GetTask(ctx context.Context, slug string) (*model.Task, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 // Mutation returns generated.MutationResolver implementation.
