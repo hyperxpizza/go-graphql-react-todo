@@ -50,8 +50,9 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetAllTasks func(childComplexity int) int
-		GetTask     func(childComplexity int, slug string) int
+		GetAllTasks   func(childComplexity int) int
+		GetTaskByID   func(childComplexity int, id string) int
+		GetTaskBySlug func(childComplexity int, slug string) int
 	}
 
 	Task struct {
@@ -72,7 +73,8 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	GetAllTasks(ctx context.Context) ([]*model.Task, error)
-	GetTask(ctx context.Context, slug string) (*model.Task, error)
+	GetTaskBySlug(ctx context.Context, slug string) (*model.Task, error)
+	GetTaskByID(ctx context.Context, id string) (*model.Task, error)
 }
 
 type executableSchema struct {
@@ -133,17 +135,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetAllTasks(childComplexity), true
 
-	case "Query.getTask":
-		if e.complexity.Query.GetTask == nil {
+	case "Query.getTaskByID":
+		if e.complexity.Query.GetTaskByID == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getTask_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_getTaskByID_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetTask(childComplexity, args["slug"].(string)), true
+		return e.complexity.Query.GetTaskByID(childComplexity, args["id"].(string)), true
+
+	case "Query.getTaskBySlug":
+		if e.complexity.Query.GetTaskBySlug == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getTaskBySlug_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetTaskBySlug(childComplexity, args["slug"].(string)), true
 
 	case "Task.createdAt":
 		if e.complexity.Task.CreatedAt == nil {
@@ -271,7 +285,8 @@ type Task {
 
 type Query {
   getAllTasks: [Task!]!
-  getTask(slug: String!): Task!
+  getTaskBySlug(slug: String!): Task!
+  getTaskByID(id: ID!): Task!
 }
 
 type Mutation {
@@ -375,7 +390,22 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_getTask_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_getTaskByID_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getTaskBySlug_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -586,7 +616,7 @@ func (ec *executionContext) _Query_getAllTasks(ctx context.Context, field graphq
 	return ec.marshalNTask2ᚕᚖgithubᚗcomᚋhyperxpizzaᚋgoᚑreactᚑgqlᚑtodoᚋgraphᚋmodelᚐTaskᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_getTask(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_getTaskBySlug(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -603,7 +633,7 @@ func (ec *executionContext) _Query_getTask(ctx context.Context, field graphql.Co
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_getTask_args(ctx, rawArgs)
+	args, err := ec.field_Query_getTaskBySlug_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -611,7 +641,49 @@ func (ec *executionContext) _Query_getTask(ctx context.Context, field graphql.Co
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetTask(rctx, args["slug"].(string))
+		return ec.resolvers.Query().GetTaskBySlug(rctx, args["slug"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Task)
+	fc.Result = res
+	return ec.marshalNTask2ᚖgithubᚗcomᚋhyperxpizzaᚋgoᚑreactᚑgqlᚑtodoᚋgraphᚋmodelᚐTask(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getTaskByID(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getTaskByID_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetTaskByID(rctx, args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2106,7 +2178,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
-		case "getTask":
+		case "getTaskBySlug":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -2114,7 +2186,21 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_getTask(ctx, field)
+				res = ec._Query_getTaskBySlug(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "getTaskByID":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getTaskByID(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

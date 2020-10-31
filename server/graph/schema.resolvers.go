@@ -37,12 +37,12 @@ func (r *mutationResolver) CreateTask(ctx context.Context, name string, descript
 		Slug:        taskSlug,
 	}
 
-	stmt, err := r.Database.Prepare(`INSERT INTO tasks VALUES($1, $2, $3, $4, $5, $6)`)
+	stmt, err := r.Database.Prepare(`INSERT INTO tasks VALUES($1, $2, $3, $4, $5, $6, $7)`)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = stmt.Exec(id, name, description, false, ts, ts)
+	_, err = stmt.Exec(id, name, description, false, ts, ts, taskSlug)
 	if err != nil {
 		return nil, err
 	}
@@ -62,8 +62,24 @@ func (r *queryResolver) GetAllTasks(ctx context.Context) ([]*model.Task, error) 
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *queryResolver) GetTask(ctx context.Context, slug string) (*model.Task, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) GetTaskBySlug(ctx context.Context, slug string) (*model.Task, error) {
+	var task model.Task
+	err := r.Database.QueryRow(`SELECT * FROM tasks WHERE slug=$1`, slug).Scan(&task.ID, &task.Name, &task.Description, &task.Done, &task.CreatedAt, &task.UpdatedAt, &task.Slug)
+	if err != nil {
+		return nil, err
+	}
+
+	return &task, nil
+}
+
+func (r *queryResolver) GetTaskByID(ctx context.Context, id string) (*model.Task, error) {
+	var task model.Task
+	err := r.Database.QueryRow(`SELECT * FROM tasks WHERE id=$1`, id).Scan(&task.ID, &task.Name, &task.Description, &task.Done, &task.CreatedAt, &task.UpdatedAt, &task.Slug)
+	if err != nil {
+		return nil, err
+	}
+
+	return &task, nil
 }
 
 // Mutation returns generated.MutationResolver implementation.
@@ -74,3 +90,19 @@ func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) GetTask(ctx context.Context, slug string) (*model.Task, error) {
+	var task model.Task
+	err := r.Database.QueryRow(`SELECT * FROM tasks WHERE slug=$1`, slug).Scan(&task)
+	if err != nil {
+		return nil, err
+	}
+
+	return &task, nil
+}

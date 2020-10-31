@@ -11,7 +11,8 @@ type Task {
 
 type Query {
   getAllTasks: [Task!]!
-  getTask(slug: String!): Task!
+  getTaskBySlug(slug: String!): Task!
+  getTaskByID(id: ID!): Task!
 }
 
 type Mutation {
