@@ -59,7 +59,26 @@ func (r *mutationResolver) UpdateTask(ctx context.Context, name string, descript
 }
 
 func (r *queryResolver) GetAllTasks(ctx context.Context) ([]*model.Task, error) {
-	panic(fmt.Errorf("not implemented"))
+	var tasks []*model.Task
+
+	rows, err := r.Database.Query(`SELECT * FROM TASKS`)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var task model.Task
+		err := rows.Scan(&task.ID, &task.Name, &task.Description, &task.Done, &task.CreatedAt, &task.UpdatedAt, &task.Slug)
+		if err != nil {
+			return nil, err
+		}
+
+		tasks = append(tasks, &task)
+	}
+
+	return tasks, nil
 }
 
 func (r *queryResolver) GetTaskBySlug(ctx context.Context, slug string) (*model.Task, error) {
