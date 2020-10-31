@@ -7,3 +7,4 @@ CREATE TABLE tasks (
     updated_at TEXT NOT NULL,
     slug TEXT NOT NULL UNIQUE
 );
+

@@ -46,7 +46,7 @@ type ComplexityRoot struct {
 	Mutation struct {
 		CreateTask func(childComplexity int, name string, description string) int
 		DeleteTask func(childComplexity int, id string) int
-		UpdateTask func(childComplexity int, name string, description string, done bool) int
+		UpdateTask func(childComplexity int, id string, name string, description string, done bool) int
 	}
 
 	Query struct {
@@ -69,7 +69,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateTask(ctx context.Context, name string, description string) (*model.Task, error)
 	DeleteTask(ctx context.Context, id string) (*string, error)
-	UpdateTask(ctx context.Context, name string, description string, done bool) (*model.Task, error)
+	UpdateTask(ctx context.Context, id string, name string, description string, done bool) (*model.Task, error)
 }
 type QueryResolver interface {
 	GetAllTasks(ctx context.Context) ([]*model.Task, error)
@@ -126,7 +126,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateTask(childComplexity, args["name"].(string), args["description"].(string), args["done"].(bool)), true
+		return e.complexity.Mutation.UpdateTask(childComplexity, args["id"].(string), args["name"].(string), args["description"].(string), args["done"].(bool)), true
 
 	case "Query.getAllTasks":
 		if e.complexity.Query.GetAllTasks == nil {
@@ -292,7 +292,7 @@ type Query {
 type Mutation {
   createTask(name: String!, description: String!): Task!
   deleteTask(id: ID!): ID
-  updateTask(name: String!, description: String!, done: Boolean!): Task!
+  updateTask(id: ID!, name: String!, description: String!, done: Boolean!): Task!
 }
 
 scalar Timestamp`, BuiltIn: false},
@@ -346,32 +346,41 @@ func (ec *executionContext) field_Mutation_updateTask_args(ctx context.Context, 
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["name"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["name"] = arg0
+	args["id"] = arg0
 	var arg1 string
-	if tmp, ok := rawArgs["description"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 		arg1, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["description"] = arg1
-	var arg2 bool
-	if tmp, ok := rawArgs["done"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("done"))
-		arg2, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+	args["name"] = arg1
+	var arg2 string
+	if tmp, ok := rawArgs["description"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+		arg2, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["done"] = arg2
+	args["description"] = arg2
+	var arg3 bool
+	if tmp, ok := rawArgs["done"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("done"))
+		arg3, err = ec.unmarshalNBoolean2bool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["done"] = arg3
 	return args, nil
 }
 
@@ -564,7 +573,7 @@ func (ec *executionContext) _Mutation_updateTask(ctx context.Context, field grap
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateTask(rctx, args["name"].(string), args["description"].(string), args["done"].(bool))
+		return ec.resolvers.Mutation().UpdateTask(rctx, args["id"].(string), args["name"].(string), args["description"].(string), args["done"].(bool))
 	})
 	if err != nil {
 		ec.Error(ctx, err)

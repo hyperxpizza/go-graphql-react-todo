@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
@@ -17,10 +16,8 @@ import (
 
 func (r *mutationResolver) CreateTask(ctx context.Context, name string, description string) (*model.Task, error) {
 	// check if name is not taken
-	err := r.Database.QueryRow(`SELECT name FROM tasks WHERE task=$1`, name).Scan(&name)
-	if err != sql.ErrNoRows {
-		return nil, fmt.Errorf("This name already exists in the database")
-	}
+	//err := r.Database.QueryRow(`SELECT name FROM tasks WHERE task=$1`, name).Scan(&name)
+	//if err == sql.ErrNoRows {
 
 	// create uuid
 	id, err := uuid.NewV4()
@@ -61,8 +58,43 @@ func (r *mutationResolver) DeleteTask(ctx context.Context, id string) (*string, 
 	panic(fmt.Errorf("not implemented"))
 }
 
-func (r *mutationResolver) UpdateTask(ctx context.Context, name string, description string, done bool) (*model.Task, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *mutationResolver) UpdateTask(ctx context.Context, id string, name string, description string, done bool) (*model.Task, error) {
+	// check if task exists
+	var task model.Task
+	err := r.Database.QueryRow(`SELECT * FROM tasks WHERE id=$1`, id).Scan(&task.ID, &task.Name, &task.Description, &task.Done, &task.CreatedAt, &task.UpdatedAt, &task.Slug)
+	if err != nil {
+		return nil, err
+	}
+
+	// check if name is not taken
+	//err = r.Database.QueryRow(`SELECT name FROM tasks WHERE task=$1`, name).Scan(&name)
+	//if err != sql.ErrNoRows {
+	//	return nil, fmt.Errorf("This name is already taken")
+	//}
+
+	// get update time
+	ts := time.Now().Format("02-Jan-2006 15:04:05")
+
+	// create slug
+	newSlug := slug.Make(name)
+
+	stmt, err := r.Database.Prepare(`UPDATE tasks SET taskName=$1, taskDescription=$2, done=$3, updated_at=$4, slug=$5 WHERE id=$6`)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = stmt.Exec(name, description, done, ts, newSlug, id)
+	if err != nil {
+		return nil, err
+	}
+
+	task.Name = name
+	task.Description = description
+	task.Done = done
+	task.UpdatedAt = ts
+	task.Slug = newSlug
+
+	return &task, nil
 }
 
 func (r *queryResolver) GetAllTasks(ctx context.Context) ([]*model.Task, error) {
